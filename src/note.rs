@@ -1,9 +1,11 @@
-use std::error::Error;
 use std::fmt;
 use std::fmt::Display;
+use std::ops::MulAssign;
 use std::str::FromStr;
+use std::{error::Error, ops::Mul};
 
 use nom::{IResult, error::ErrorKind};
+use num::{Integer, One, pow};
 use phf::phf_map;
 
 pub struct FullNote {
@@ -78,6 +80,110 @@ impl Default for Harmonym {
             ],
             base: 261.6255653006,
         }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Ratio {
+    dividend: u32,
+    divisor: u32,
+}
+
+impl From<(u32, u32)> for Ratio {
+    fn from(value: (u32, u32)) -> Self {
+        Self {
+            dividend: value.0,
+            divisor: value.1,
+        }
+    }
+}
+
+impl Into<Ratio> for Harmonym {
+    fn into(self) -> Ratio {
+        self.evaluate()
+    }
+}
+
+fn dim2frac(dim: u8) -> Ratio {
+    match dim {
+        0 => (1, 1),
+        1 => (2, 1),
+        2 => (3, 2),
+        3 => (5, 4),
+        4 => (7, 4),
+        5 => (11, 4),
+        _ => (1, 1),
+    }
+    .into()
+}
+
+impl Ratio {
+    fn flip(self) -> Self {
+        Self {
+            dividend: self.divisor,
+            divisor: self.dividend,
+        }
+    }
+}
+
+impl Mul for Ratio {
+    type Output = Ratio;
+    fn mul(self, rhs: Self) -> Self::Output {
+        let gcd = (self.dividend * rhs.dividend).gcd(&(self.divisor * rhs.divisor));
+        Self {
+            dividend: self.dividend * rhs.dividend / gcd,
+            divisor: self.divisor * rhs.divisor / gcd,
+        }
+    }
+}
+
+impl MulAssign for Ratio {
+    fn mul_assign(&mut self, rhs: Self) {
+        *self = *self * rhs;
+    }
+}
+
+impl One for Ratio {
+    fn is_one(&self) -> bool
+    where
+        Self: PartialEq,
+    {
+        self.dividend == 1 && self.divisor == 1
+    }
+    fn set_one(&mut self) {
+        *self = Self {
+            divisor: 1,
+            dividend: 1,
+        };
+    }
+    fn one() -> Self {
+        Self {
+            divisor: 1,
+            dividend: 1,
+        }
+    }
+}
+
+impl Display for Ratio {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}:{}", self.dividend, self.divisor)
+    }
+}
+
+impl Harmonym {
+    pub fn evaluate(&self) -> Ratio {
+        let mut ratio = Ratio {
+            divisor: 1,
+            dividend: 1,
+        };
+        for i in self.notes {
+            if i.degree() > 0 {
+                ratio *= pow(dim2frac(i.dim()), i.degree() as usize);
+            } else {
+                ratio *= pow(dim2frac(i.dim()).flip(), i.degree().abs() as usize)
+            }
+        }
+        ratio
     }
 }
 

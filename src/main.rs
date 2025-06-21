@@ -9,6 +9,7 @@ fn main() {
             Ok(o) => o.1,
             Err(_) => return,
         };
-        println!("{}\n{:#?}", harmonym, harmonym);
+        println!("reverse translated:\n{}\n{:#?}", harmonym, harmonym);
+        println!("ratio: {}", harmonym.evaluate());
     }
 }
