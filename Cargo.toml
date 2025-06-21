@@ -1,0 +1,8 @@
+[package]
+name = "chalaxata-rs"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+nom = "8.0.0"
+phf = { version = "0.12.1", features = ["macros"] }
