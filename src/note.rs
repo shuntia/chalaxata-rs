@@ -4,18 +4,54 @@ use std::ops::MulAssign;
 use std::str::FromStr;
 use std::{error::Error, ops::Mul};
 
+use nom::Parser;
+use nom::character::complete::char;
+use nom::multi::many0;
 use nom::{IResult, error::ErrorKind};
 use num::{Integer, One, pow};
 use phf::phf_map;
 
-pub struct FullNote {
-    harmonym: Harmonym,
-}
+use crate::DEFAULT_BASE;
+use crate::chord::FullChord;
+use crate::playable::PlayableChord;
 
 #[derive(Debug)]
+pub struct FullNote {
+    harmonym: Harmonym,
+    base: f32,
+}
+
+impl Into<FullChord> for FullNote {
+    fn into(self) -> FullChord {
+        FullChord {
+            tones: vec![self.harmonym],
+            base: self.base,
+        }
+    }
+}
+
+impl From<Harmonym> for FullNote {
+    fn from(value: Harmonym) -> Self {
+        Self {
+            harmonym: value,
+            base: crate::DEFAULT_BASE,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct Harmonym {
     notes: [NotePart; 5],
-    base: f64,
+}
+
+impl Into<PlayableChord> for Harmonym {
+    fn into(self) -> PlayableChord {
+        FullChord {
+            tones: vec![self],
+            base: DEFAULT_BASE,
+        }
+        .into()
+    }
 }
 
 impl Display for Harmonym {
@@ -78,7 +114,6 @@ impl Default for Harmonym {
                     degree: 0,
                 },
             ],
-            base: 261.6255653006,
         }
     }
 }
@@ -184,6 +219,14 @@ impl Harmonym {
             }
         }
         ratio
+    }
+}
+
+impl Mul<f32> for Harmonym {
+    type Output = f32;
+    fn mul(self, rhs: f32) -> Self::Output {
+        let ratio = self.evaluate();
+        rhs * ratio.dividend as f32 / ratio.divisor as f32
     }
 }
 
@@ -568,8 +611,14 @@ pub fn parse_harmonym(input: &str) -> IResult<&str, Harmonym> {
         }
     }
 
+    let (next, parts) = many0(char('+')).parse(rest)?;
+    notes[0] = NotePart {
+        degree: parts.len() as i8,
+        dimension: 1,
+    };
+    rest = next;
     if rest.is_empty() {
-        Ok(("", Harmonym { notes, base: 1.0 }))
+        Ok(("", Harmonym { notes }))
     } else {
         Err(nom::Err::Error(nom::error::Error::new(
             rest,
