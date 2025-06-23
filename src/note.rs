@@ -617,6 +617,12 @@ pub fn parse_harmonym(input: &str) -> IResult<&str, Harmonym> {
         dimension: 1,
     };
     rest = next;
+    let (next, parts) = many0(char('-')).parse(rest)?;
+    notes[0] = NotePart {
+        degree: -1 * parts.len() as i8,
+        dimension: 1,
+    };
+    rest = next;
     if rest.is_empty() {
         Ok(("", Harmonym { notes }))
     } else {
