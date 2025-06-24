@@ -5,7 +5,7 @@ use std::{
 
 use rodio::{OutputStream, Sink, Source};
 
-use crate::playable::PlayableChord;
+use crate::{chord::Chord, note::Harmonym, playable::PlayableChord};
 
 mod chord;
 mod note;
@@ -47,21 +47,27 @@ fn main() {
             }
             "exit" => return,
             chord => {
-                let harmonym = match note::parse_harmonym(chord) {
+                let mut chord: Chord = match Chord::parse_chord(chord) {
                     Ok(o) => o.1,
                     Err(e) => {
-                        println!("Invalid Harmonym.:{:#?}", e);
+                        println!("Failed to parse chord: {:?}", e);
                         continue;
                     }
                 };
-                println!("reverse translated:\n{}\n{:#?}", harmonym, harmonym);
-                println!("ratio: {}", harmonym.evaluate());
+                println!(
+                    "ratio: {}",
+                    chord
+                        .tones
+                        .iter()
+                        .map(|el| format!("{}, ", el.evaluate().to_string()))
+                        .collect::<String>()
+                );
                 if stack {
-                    harmonyms.push(harmonym);
-                    sink.append(Into::<PlayableChord>::into(harmonym).amplify(0.2));
+                    harmonyms.append(&mut chord.tones);
+                    sink.append(Into::<PlayableChord>::into(chord).amplify(0.2));
                 } else {
                     sink.append(
-                        Into::<PlayableChord>::into(harmonym)
+                        Into::<PlayableChord>::into(chord)
                             .take_duration(Duration::from_secs(3))
                             .amplify(0.2),
                     );

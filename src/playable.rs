@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use rodio::Source;
 
-use crate::chord::FullChord;
+use crate::chord::{Chord, FullChord};
 
 pub const SAMPLE_RATE: u32 = 48000;
 
@@ -18,6 +18,16 @@ impl From<FullChord> for PlayableChord {
     fn from(value: FullChord) -> Self {
         Self {
             chord: value,
+            current_sample: 0,
+            wavetype: DEFAULT_WAVE,
+        }
+    }
+}
+
+impl From<Chord> for PlayableChord {
+    fn from(value: Chord) -> Self {
+        Self {
+            chord: value.into(),
             current_sample: 0,
             wavetype: DEFAULT_WAVE,
         }
