@@ -39,7 +39,7 @@ impl From<Harmonym> for FullNote {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Harmonym {
     notes: [NotePart; 5],
 }
@@ -135,7 +135,7 @@ impl From<(u32, u32)> for Ratio {
 
 impl Into<Ratio> for Harmonym {
     fn into(self) -> Ratio {
-        self.evaluate()
+        self.eval()
     }
 }
 
@@ -158,6 +158,12 @@ impl Ratio {
             dividend: self.divisor,
             divisor: self.dividend,
         }
+    }
+}
+
+impl Into<f32> for Ratio {
+    fn into(self) -> f32 {
+        self.dividend as f32 / self.divisor as f32
     }
 }
 
@@ -206,7 +212,7 @@ impl Display for Ratio {
 }
 
 impl Harmonym {
-    pub fn evaluate(&self) -> Ratio {
+    pub fn eval(&self) -> Ratio {
         let mut ratio = Ratio {
             divisor: 1,
             dividend: 1,
@@ -222,10 +228,22 @@ impl Harmonym {
     }
 }
 
+impl Ord for Harmonym {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        Into::<f32>::into(self.eval()).total_cmp(&other.eval().into())
+    }
+}
+
+impl PartialOrd for Harmonym {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 impl Mul<f32> for Harmonym {
     type Output = f32;
     fn mul(self, rhs: f32) -> Self::Output {
-        let ratio = self.evaluate();
+        let ratio = self.eval();
         rhs * ratio.dividend as f32 / ratio.divisor as f32
     }
 }

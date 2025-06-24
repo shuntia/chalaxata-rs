@@ -24,6 +24,9 @@ impl Chord {
         }
         Ok(("", Self { tones: ret }))
     }
+    pub fn sort(&mut self) {
+        self.tones.sort();
+    }
 }
 
 fn split_pascal(s: &str) -> Vec<&str> {

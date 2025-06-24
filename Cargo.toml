@@ -8,3 +8,6 @@ nom = "8.0.0"
 num = "0.4.3"
 phf = { version = "0.12.1", features = ["macros"] }
 rodio = "0.20.1"
+
+[feature]
+full-precision=[]

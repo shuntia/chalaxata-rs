@@ -54,12 +54,13 @@ fn main() {
                         continue;
                     }
                 };
+                chord.sort();
                 println!(
                     "ratio: {}",
                     chord
                         .tones
                         .iter()
-                        .map(|el| format!("{}, ", el.evaluate().to_string()))
+                        .map(|el| format!("{}, ", el.eval().to_string()))
                         .collect::<String>()
                 );
                 if stack {
