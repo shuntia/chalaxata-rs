@@ -36,7 +36,8 @@ fn main() {
             }
             "stop" => {
                 println!("All sounds stopped");
-                sinks.clear()
+                sinks.clear();
+                harmonyms.clear();
             }
             "gather" => {
                 let mut chordname: String = String::new();
@@ -64,11 +65,15 @@ fn main() {
                         .collect::<String>()
                 );
                 if stack {
-                    harmonyms.append(&mut chord.tones);
-                    sink.append(Into::<PlayableChord>::into(chord).amplify(0.2));
+                    harmonyms.append(&mut chord.tones.clone());
+                    let mut playable_chord: PlayableChord = chord.into();
+                    playable_chord.prerender();
+                    sink.append(playable_chord.amplify(0.2));
                 } else {
+                    let mut playable_chord: PlayableChord = chord.into();
+                    playable_chord.prerender();
                     sink.append(
-                        Into::<PlayableChord>::into(chord)
+                        playable_chord
                             .take_duration(Duration::from_secs(3))
                             .amplify(0.2),
                     );

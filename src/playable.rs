@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{iter::Cycle, slice::Iter, time::Duration, vec::IntoIter};
 
 use rodio::Source;
 
@@ -17,11 +17,41 @@ pub struct PlayableChord {
     base: f32,
     current_sample: u32,
     wavetype: Waveform,
-    cache: Vec<Vec<f32>>,
+    iterators: Vec<Cycle<IntoIter<f32>>>,
 }
 
 impl PlayableChord {
-    pub fn prerender(&mut self) {}
+    pub fn prerender(&mut self) {
+        let mut cache = Vec::with_capacity(self.harmonyms.len());
+        for i in &self.harmonyms {
+            let mut chart: Vec<f32> = Vec::with_capacity(
+                (SAMPLE_RATE / ((Into::<f32>::into(i.eval()) * DEFAULT_BASE) as u32)) as usize,
+            );
+            let mut t: f32;
+            for j in 0..SAMPLE_RATE / ((Into::<f32>::into(i.eval()) * DEFAULT_BASE) as u32) {
+                t = j as f32 / self.sample_rate() as f32;
+                let phase: f32 = 2.0 * std::f32::consts::PI * (*i * self.base) * t;
+                let sample = match self.wavetype {
+                    Waveform::Sine => phase.sin(),
+                    Waveform::Square => {
+                        if phase.sin() >= 0.0 {
+                            1.0
+                        } else {
+                            -1.0
+                        }
+                    }
+                    Waveform::Saw => {
+                        2.0 * (phase / (2.0 * std::f32::consts::PI)
+                            - ((phase / (2.0 * std::f32::consts::PI)) + 0.5).floor())
+                    }
+                    Waveform::Triangle => (2.0 / std::f32::consts::PI) * (phase * 0.5).sin().asin(),
+                };
+                chart.push(sample);
+            }
+            cache.push(chart);
+        }
+        self.iterators = cache.into_iter().map(|el| el.into_iter().cycle()).collect();
+    }
 }
 
 impl From<FullChord> for PlayableChord {
@@ -31,7 +61,7 @@ impl From<FullChord> for PlayableChord {
             base: value.base,
             current_sample: 0,
             wavetype: DEFAULT_WAVE,
-            cache: Vec::new(),
+            iterators: Vec::new(),
         }
     }
 }
@@ -43,7 +73,7 @@ impl From<Chord> for PlayableChord {
             base: DEFAULT_BASE,
             current_sample: 0,
             wavetype: DEFAULT_WAVE,
-            cache: Vec::new(),
+            iterators: Vec::new(),
         }
     }
 }
@@ -52,6 +82,8 @@ impl Iterator for PlayableChord {
     type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
+        Some(self.iterators.iter_mut().map(|el| el.next().unwrap()).sum())
+        /*
         let t = self.current_sample as f32 / SAMPLE_RATE as f32;
         let mut total = 0.;
 
@@ -77,6 +109,7 @@ impl Iterator for PlayableChord {
 
         self.current_sample += 1;
         Some(total * self.harmonyms.len() as f32)
+        */
     }
 }
 impl Source for PlayableChord {
