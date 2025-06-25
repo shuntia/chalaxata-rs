@@ -18,6 +18,7 @@ pub struct PlayableChord {
     current_sample: u32,
     wavetype: Waveform,
     iterators: Vec<Cycle<IntoIter<f32>>>,
+    strum: bool,
 }
 
 impl PlayableChord {
@@ -62,6 +63,7 @@ impl From<FullChord> for PlayableChord {
             current_sample: 0,
             wavetype: DEFAULT_WAVE,
             iterators: Vec::new(),
+            strum: false,
         }
     }
 }
@@ -74,6 +76,7 @@ impl From<Chord> for PlayableChord {
             current_sample: 0,
             wavetype: DEFAULT_WAVE,
             iterators: Vec::new(),
+            strum: false,
         }
     }
 }
@@ -82,7 +85,24 @@ impl Iterator for PlayableChord {
     type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
-        Some(self.iterators.iter_mut().map(|el| el.next().unwrap()).sum())
+        if self.strum {
+            self.current_sample += 1;
+            Some(
+                self.iterators
+                    .iter_mut()
+                    .enumerate()
+                    .map(|(idx, el)| {
+                        if (idx as f32) > self.current_sample as f32 / SAMPLE_RATE as f32 * 20. {
+                            0.
+                        } else {
+                            el.next().unwrap()
+                        }
+                    })
+                    .sum(),
+            )
+        } else {
+            Some(self.iterators.iter_mut().map(|el| el.next().unwrap()).sum())
+        }
         /*
         let t = self.current_sample as f32 / SAMPLE_RATE as f32;
         let mut total = 0.;

@@ -1,11 +1,12 @@
 use std::{
     io::{BufRead, stdin},
+    sync::atomic::AtomicBool,
     time::Duration,
 };
 
 use rodio::{OutputStream, Sink, Source};
 
-use crate::{chord::Chord, note::Harmonym, playable::PlayableChord};
+use crate::{chord::Chord, playable::PlayableChord};
 
 mod chord;
 mod note;
@@ -13,6 +14,7 @@ mod playable;
 mod score;
 
 pub const DEFAULT_BASE: f32 = 523.26;
+pub static STRUMMING: AtomicBool = AtomicBool::new(false);
 
 fn main() {
     let mut stack = false;
@@ -45,6 +47,10 @@ fn main() {
                     chordname.push_str(i.to_string().as_str());
                 }
                 println!("Currently playing: {}", chordname);
+            }
+            "strum" => {
+                println!("strumming.");
+                STRUMMING.fetch_not(std::sync::atomic::Ordering::Release);
             }
             "exit" => return,
             chord => {
