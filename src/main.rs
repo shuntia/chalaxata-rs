@@ -52,6 +52,27 @@ fn main() {
                 println!("strumming.");
                 STRUMMING.fetch_not(std::sync::atomic::Ordering::Release);
             }
+            "help" => {
+                println!("Displaying help.");
+                println!(
+                    r#"
+This is Chalaxata-rs.
+
+By default, it parses your input as a chord.
+Append "+" to translate a note an octave up, or "-" to translate a note an octave down. Do not use two at the same time.
+The program is highly case sensitive(Chyly and ChyLi are invalid, but ChyLy and Chyli are valid.)
+
+
+Commands:
+    help: Display this help message.
+    stack: Toggle stacking, which will store all playing notes for gathering, and will not stop the sound.
+    gather: Gather currently playing sounds to output a chord. Only for use in "stack" mode
+    strum: Strum all chords instead of playing them all at once.
+    stop: Stop all sounds.
+    exit: Exit this program.
+                    "#
+                )
+            }
             "exit" => return,
             chord => {
                 let mut chord: Chord = match Chord::parse_chord(chord) {
