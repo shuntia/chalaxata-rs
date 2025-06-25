@@ -49,8 +49,14 @@ fn main() {
                 println!("Currently playing: {}", chordname);
             }
             "strum" => {
-                println!("strumming.");
-                STRUMMING.fetch_not(std::sync::atomic::Ordering::Release);
+                println!(
+                    "{}",
+                    if STRUMMING.fetch_not(std::sync::atomic::Ordering::Release) {
+                        "Stopped strumming."
+                    } else {
+                        "Strumming."
+                    }
+                )
             }
             "help" => {
                 println!("Displaying help.");
@@ -88,7 +94,7 @@ Commands:
                     chord
                         .tones
                         .iter()
-                        .map(|el| format!("{}, ", el.eval().to_string()))
+                        .map(|el| format!("{}, ", el.eval()))
                         .collect::<String>()
                 );
                 if stack {

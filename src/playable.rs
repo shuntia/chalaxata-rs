@@ -1,9 +1,9 @@
-use std::{iter::Cycle, slice::Iter, time::Duration, vec::IntoIter};
+use std::{iter::Cycle, time::Duration, vec::IntoIter};
 
 use rodio::Source;
 
 use crate::{
-    DEFAULT_BASE,
+    DEFAULT_BASE, STRUMMING,
     chord::{Chord, FullChord},
     note::Harmonym,
 };
@@ -63,7 +63,7 @@ impl From<FullChord> for PlayableChord {
             current_sample: 0,
             wavetype: DEFAULT_WAVE,
             iterators: Vec::new(),
-            strum: false,
+            strum: STRUMMING.load(std::sync::atomic::Ordering::Relaxed),
         }
     }
 }
@@ -76,7 +76,7 @@ impl From<Chord> for PlayableChord {
             current_sample: 0,
             wavetype: DEFAULT_WAVE,
             iterators: Vec::new(),
-            strum: false,
+            strum: STRUMMING.load(std::sync::atomic::Ordering::Relaxed),
         }
     }
 }
@@ -92,7 +92,7 @@ impl Iterator for PlayableChord {
                     .iter_mut()
                     .enumerate()
                     .map(|(idx, el)| {
-                        if (idx as f32) > self.current_sample as f32 / SAMPLE_RATE as f32 * 20. {
+                        if (idx as f32) > self.current_sample as f32 / SAMPLE_RATE as f32 * 15. {
                             0.
                         } else {
                             el.next().unwrap()

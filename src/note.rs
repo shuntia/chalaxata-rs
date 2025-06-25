@@ -21,11 +21,11 @@ pub struct FullNote {
     base: f32,
 }
 
-impl Into<FullChord> for FullNote {
-    fn into(self) -> FullChord {
+impl From<FullNote> for FullChord {
+    fn from(val: FullNote) -> Self {
         FullChord {
-            tones: vec![self.harmonym],
-            base: self.base,
+            tones: vec![val.harmonym],
+            base: val.base,
         }
     }
 }
@@ -44,10 +44,10 @@ pub struct Harmonym {
     notes: [NotePart; 5],
 }
 
-impl Into<PlayableChord> for Harmonym {
-    fn into(self) -> PlayableChord {
+impl From<Harmonym> for PlayableChord {
+    fn from(val: Harmonym) -> Self {
         FullChord {
-            tones: vec![self],
+            tones: vec![val],
             base: DEFAULT_BASE,
         }
         .into()
@@ -133,9 +133,9 @@ impl From<(u32, u32)> for Ratio {
     }
 }
 
-impl Into<Ratio> for Harmonym {
-    fn into(self) -> Ratio {
-        self.eval()
+impl From<Harmonym> for Ratio {
+    fn from(val: Harmonym) -> Self {
+        val.eval()
     }
 }
 
@@ -161,9 +161,9 @@ impl Ratio {
     }
 }
 
-impl Into<f32> for Ratio {
-    fn into(self) -> f32 {
-        self.dividend as f32 / self.divisor as f32
+impl From<Ratio> for f32 {
+    fn from(val: Ratio) -> Self {
+        val.dividend as f32 / val.divisor as f32
     }
 }
 
@@ -221,7 +221,7 @@ impl Harmonym {
             if i.degree() > 0 {
                 ratio *= pow(dim2frac(i.dim()), i.degree() as usize);
             } else {
-                ratio *= pow(dim2frac(i.dim()).flip(), i.degree().abs() as usize)
+                ratio *= pow(dim2frac(i.dim()).flip(), i.degree().unsigned_abs() as usize)
             }
         }
         ratio
@@ -255,7 +255,7 @@ pub struct NotePart {
 }
 
 impl NotePart {
-    pub fn to_root(&self) -> String {
+    pub fn to_root(self) -> String {
         match self.dimension {
             1 => "Ah",
             2 => match self.degree {
@@ -298,7 +298,7 @@ impl NotePart {
         }
         .to_owned()
     }
-    pub fn to_suffix(&self) -> String {
+    pub fn to_suffix(self) -> String {
         match self.dimension {
             1 => "ah",
             2 => match self.degree {
@@ -349,6 +349,7 @@ impl NotePart {
     pub fn degree(&self) -> i8 {
         self.degree
     }
+    #[allow(unused)]
     pub fn new(dimension: u8, degree: i8) -> Option<Self> {
         if degree < 4 && degree > -4 && dimension <= 5 {
             Some(NotePart { dimension, degree })
@@ -541,7 +542,7 @@ fn try_match<'a>(
     dimension: u8,
 ) -> Option<(&'a str, NotePart)> {
     let mut keys: Vec<_> = map.keys().collect();
-    keys.sort_by(|a, b| b.len().cmp(&a.len())); // longest match first
+    keys.sort_by_key(|b| std::cmp::Reverse(b.len()));
 
     for key in keys {
         if let Some(rest) = input.strip_prefix(key) {
@@ -637,7 +638,7 @@ pub fn parse_harmonym(input: &str) -> IResult<&str, Harmonym> {
     rest = next;
     let (next, parts) = many0(char('-')).parse(rest)?;
     notes[0] = NotePart {
-        degree: -1 * parts.len() as i8,
+        degree: -(parts.len() as i8),
         dimension: 1,
     };
     rest = next;

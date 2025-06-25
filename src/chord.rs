@@ -32,8 +32,8 @@ impl Chord {
 fn split_pascal(s: &str) -> Vec<&str> {
     let mut result = Vec::new();
     let mut start = 0;
-    let mut chars = s.char_indices().peekable();
-    while let Some((i, c)) = chars.next() {
+    let chars = s.char_indices().peekable();
+    for (i, c) in chars {
         if c.is_uppercase() && i != 0 {
             result.push(&s[start..i]);
             start = i;
@@ -45,10 +45,10 @@ fn split_pascal(s: &str) -> Vec<&str> {
     result
 }
 
-impl Into<FullChord> for Chord {
-    fn into(self) -> FullChord {
+impl From<Chord> for FullChord {
+    fn from(val: Chord) -> Self {
         FullChord {
-            tones: self.tones,
+            tones: val.tones,
             base: DEFAULT_BASE,
         }
     }
