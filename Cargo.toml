@@ -4,10 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+iced = { git = "https://github.com/iced-rs/iced.git", features = ["canvas"] }
+iced_runtime = "0.13.2"
+log = "0.4.27"
 nom = "8.0.0"
 num = "0.4.3"
 phf = { version = "0.12.1", features = ["macros"] }
 rodio = "0.20.1"
 
-[feature]
-full-precision=[]
+[features]
+cli=[]

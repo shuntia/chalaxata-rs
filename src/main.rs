@@ -9,6 +9,8 @@ use rodio::{OutputStream, Sink, Source};
 use crate::{chord::Chord, playable::PlayableChord};
 
 mod chord;
+mod data;
+mod gui;
 mod note;
 mod playable;
 mod score;
@@ -16,6 +18,7 @@ mod score;
 pub const DEFAULT_BASE: f32 = 523.26;
 pub static STRUMMING: AtomicBool = AtomicBool::new(false);
 
+#[cfg(target_feature = "cli")]
 fn main() {
     let mut stack = false;
     let (_stream, handle) = OutputStream::try_default().unwrap();
@@ -115,4 +118,11 @@ Commands:
             }
         }
     }
+}
+
+#[cfg(not(target_feature = "cli"))]
+fn main() {
+    use crate::gui::init;
+    let (_stream, handle) = OutputStream::try_default().unwrap();
+    init();
 }
